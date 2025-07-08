@@ -1,0 +1,7 @@
+venv/
+users/
+system/logs/
+__pycache__
+
+*.lnk
+*.pyc
