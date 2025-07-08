@@ -1,4 +1,4 @@
 @echo off
 echo Ligando sistema..
-venv\Scripts\python system\core\main.py
+venv\Scripts\python system\main.py
 pause

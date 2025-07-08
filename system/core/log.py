@@ -1,7 +1,7 @@
 from loguru import logger
 import os
 
-import constants as CONSTS
+from . import constants as CONSTS
 
 class Log:
     _logger = None
