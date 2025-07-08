@@ -1,10 +1,12 @@
 from PySide6.QtWidgets import QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QHBoxLayout, QSizePolicy
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QMessageBox
 #from core.auth import authenticate_user
 
 class LoginScreen(QWidget):
     login_success = Signal(str)
+    request_shutdown = Signal()
     
     def __init__(self):
         super().__init__()
@@ -91,5 +93,13 @@ class LoginScreen(QWidget):
         #    self.password_input.clear()
     
     def shutdown(self):
-        # Implementar desligamento do sistema
-        QApplication.quit()
+        confirm = QMessageBox.question(
+            self,
+            "Desligar o sistema",
+            "Tem certeza que deseja desligar o sistema?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No
+        )
+
+        if confirm == QMessageBox.Yes:
+            self.request_shutdown.emit()

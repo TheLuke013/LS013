@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt
 from enum import Enum
 
 from .log import *
-from core.wallpaper import Wallpaper
+from ui.wallpaper import Wallpaper
 
 class WindowMode(Enum):
     WINDOWED = 0
@@ -35,6 +35,15 @@ class SystemMainWindow(QMainWindow):
         LOG_INFO("Wallpaper size: {}x{}", 
           self.wallpaper.width(),
           self.wallpaper.height())
+    
+    def remove_wallpaper(self):
+        if self.wallpaper:
+            self.wallpaper.setParent(None)
+            self.wallpaper.deleteLater()
+            self.wallpaper = None
+            LOG_WARN("Wallpaper was removed")
+        else:
+            LOG_WARN("No wallpaper to remove")
     
     def resizeEvent(self, event):
         if self.wallpaper and hasattr(self, 'wallpaper'):
