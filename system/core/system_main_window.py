@@ -36,6 +36,18 @@ class SystemMainWindow(QMainWindow):
           self.wallpaper.width(),
           self.wallpaper.height())
     
+    def hide_wallpaper(self):
+        if self.wallpaper:
+            self.wallpaper.hide()
+        else:
+            LOG_WARN("No wallpaper loaded to hide")
+
+    def show_wallpaper(self):
+        if self.wallpaper:
+            self.wallpaper.show()
+        else:
+            LOG_WARN("No wallpaper loaded to show")
+
     def remove_wallpaper(self):
         if self.wallpaper:
             self.wallpaper.setParent(None)
@@ -43,7 +55,7 @@ class SystemMainWindow(QMainWindow):
             self.wallpaper = None
             LOG_WARN("Wallpaper was removed")
         else:
-            LOG_WARN("No wallpaper to remove")
+            LOG_WARN("No wallpaper loaded to remove")
     
     def resizeEvent(self, event):
         if self.wallpaper and hasattr(self, 'wallpaper'):

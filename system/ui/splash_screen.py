@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QProgressBar
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QProgressBar, QSizePolicy
 from PySide6.QtCore import Qt, QTimer, Signal
 
 class SplashScreen(QWidget):
@@ -7,8 +7,9 @@ class SplashScreen(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowFlags(Qt.FramelessWindowHint)
+        self.setAutoFillBackground(True)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setMinimumSize(800, 600)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)

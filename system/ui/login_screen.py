@@ -2,7 +2,8 @@ from PySide6.QtWidgets import QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayo
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QApplication
 from PySide6.QtWidgets import QMessageBox
-#from core.auth import authenticate_user
+
+from core.auth import Auth
 
 class LoginScreen(QWidget):
     login_success = Signal(str)
@@ -84,13 +85,15 @@ class LoginScreen(QWidget):
     def attempt_login(self):
         username = self.username_input.text()
         password = self.password_input.text()
+
+        auth = Auth()
         
-        #if authenticate_user(username, password):
-        #    self.login_success.emit(username)
-        #    self.close()
-        #else:
-        #    # Mostrar mensagem de erro
-        #    self.password_input.clear()
+        if auth.authenticate_user(username, password):
+            self.login_success.emit(username)
+            self.close()
+        else:
+            QMessageBox.warning(self, "Usuario invalido", "Usuario ou senha estão incorretos")
+            self.password_input.clear()
     
     def shutdown(self):
         confirm = QMessageBox.question(
