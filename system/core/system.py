@@ -10,7 +10,7 @@ from ui.splash_screen import SplashScreen
 from ui.login_screen import LoginScreen
 from ui.shutdown_screen import ShutdownScreen
 from ui.desktop import Desktop
-from core.users_manager import UsersManager
+from core.users_manager import UsersManager, UserPrivilege
 
 class LSystem013(QObject):
     def __init__(self, flags: SystemFlags):
@@ -28,6 +28,7 @@ class LSystem013(QObject):
         LOG_INFO("Initializing virtual system {} in: {}", CONSTS.SYSTEM_NAME, os.getcwd())
 
         self.users_manager = UsersManager()
+        self.users_manager.create_user("admin", "123", UserPrivilege.ADMIN)
 
         self.main_window = SystemMainWindow()
         self.main_window.set_wallpaper(CONSTS.DEFAULT_WALLPAPER_FILENAME)

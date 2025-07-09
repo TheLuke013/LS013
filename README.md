@@ -2,6 +2,5 @@
 A virtual system made in python
 
 ## Usage
-To install packages``pip install -r requirements.txt``
-
-To activate virtual ambient ``venv\Scripts\activate``
+1. activate virtual ambient ``venv\Scripts\activate``
+2. install packages``pip install -r requirements.txt``

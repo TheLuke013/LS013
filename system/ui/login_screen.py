@@ -29,21 +29,24 @@ class LoginScreen(QWidget):
         self.username_input.setPlaceholderText("Usuário")
         self.username_input.setFixedWidth(300)
         self.username_input.setFixedHeight(40)
+        self.username_input.textChanged.connect(self.validate_inputs)
         
         self.password_input = QLineEdit()
         self.password_input.setPlaceholderText("Senha")
         self.password_input.setEchoMode(QLineEdit.Password)
         self.password_input.setFixedWidth(300)
         self.password_input.setFixedHeight(40)
+        self.password_input.textChanged.connect(self.validate_inputs)
         
-        login_button = QPushButton("Entrar")
-        login_button.setFixedWidth(300)
-        login_button.setFixedHeight(50)
-        login_button.clicked.connect(self.attempt_login)
+        self.login_button = QPushButton("Entrar")
+        self.login_button.setFixedWidth(300)
+        self.login_button.setFixedHeight(50)
+        self.login_button.clicked.connect(self.attempt_login)
+        self.login_button.setEnabled(False)
         
         form_layout.addWidget(self.username_input)
         form_layout.addWidget(self.password_input)
-        form_layout.addWidget(login_button)
+        form_layout.addWidget(self.login_button)
         
         footer = QHBoxLayout()
         power_button = QPushButton("⏻")
@@ -82,9 +85,22 @@ class LoginScreen(QWidget):
             }
         """)
     
+    def validate_inputs(self):
+        username = self.username_input.text()
+        password = self.password_input.text()
+        
+        if username and password:
+            self.login_button.setEnabled(True)
+        else:
+            self.login_button.setEnabled(False)
+    
     def attempt_login(self):
         username = self.username_input.text()
         password = self.password_input.text()
+
+        if not username or not password:
+            QMessageBox.warning(self, "Campos Vazios", "Por favor, preencha todos os campos.")
+            return
 
         auth = Auth()
         

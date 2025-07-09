@@ -7,7 +7,7 @@ ROOT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 WALLPAPERS_PATH = os.path.abspath(os.path.join(ROOT_PATH, "assets/wallpapers/"))
 ICONS_PATH = os.path.abspath(os.path.join(ROOT_PATH, "assets/icons/"))
 LOGS_PATH = os.path.abspath(os.path.join(ROOT_PATH, "logs/"))
-USERS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "users"))
+USERS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "users/"))
 
 #file dir
 USERS_DATA_FILENAME = os.path.abspath(os.path.join(USERS_PATH, "users.json"))
