@@ -18,6 +18,9 @@ class LSystem013(QObject):
     def __init__(self, flags: SystemFlags):
         #configure "low-level system"
         self.flags = flags
+        self.login = None
+        self.shutdown_ui = None
+        self._active_widgets = []
 
         self.window_mode = WindowMode.MAXIMIZED
         if SystemFlags.WINDOW_FULLSCREEN in self.flags:
@@ -43,17 +46,33 @@ class LSystem013(QObject):
             self.starting_system()
         else:
             self.show_splash_screen()
-        
+    
+    def _add_widget(self, widget):
+        """Adiciona um widget à lista de controle"""
+        self._active_widgets.append(widget)
+        return widget
+
+    def _cleanup_widgets(self):
+        """Limpeza segura de todos os widgets"""
+        for widget in self._active_widgets[:]:
+            try:
+                if widget and widget.parent() is None:
+                    widget.deleteLater()
+                self._active_widgets.remove(widget)
+            except RuntimeError:
+                self._active_widgets.remove(widget)
+                continue
+                
     def show_splash_screen(self):
         self.main_window.hide_wallpaper()
-        self.splash = SplashScreen()
+        self.splash = self._add_widget(SplashScreen())
         self.splash.setFixedSize(self.main_window.size())
         self.main_window.setCentralWidget(self.splash)
         self.splash.finished.connect(self.starting_system)
         self.splash.show()
     
     def show_desktop(self, username):
-        self.loading = LoadingScreen("Preparando o desktop...")
+        self.loading = self._add_widget(LoadingScreen("Preparando o desktop..."))
         self.loading.setFixedSize(self.main_window.size())
         self.main_window.setCentralWidget(self.loading)
         self.loading.show()
@@ -61,7 +80,7 @@ class LSystem013(QObject):
         QTimer.singleShot(1500, lambda: self._finish_desktop_load(username))
 
     def _finish_desktop_load(self, username):
-        self.desktop = Desktop(username, self.main_window)
+        self.desktop = Desktop(username, self)
         self.desktop.wallpaper_change_requested.connect(self.change_wallpaper)
         
         self.desktop.setFixedSize(self.main_window.size())   
@@ -93,31 +112,38 @@ class LSystem013(QObject):
             LOG_ERROR("Failed to change wallpaper to: {}", new_wp_path)
         
         return success
-            
+    
     def shutdown_system(self):
         if SystemFlags.SKIP_SHUTDOWN_SCREEN in self.flags:
+            self._cleanup_widgets()
             QApplication.quit()
-        else:
-            self.main_window.hide_wallpaper()
-
-            #delete login screen if is active
-            if self.login:
-                self.login.setParent(None)
-                self.login.deleteLater()
-                self.login = None
-
+            return
         
-            self.shutdown_ui = ShutdownScreen()
-            self.main_window.setCentralWidget(self.shutdown_ui)
-            self.shutdown_ui.show()
-            self.shutdown_ui.finished.connect(QApplication.quit)
+        self.main_window.hide_wallpaper()
+        self._cleanup_widgets()
+        
+        self.shutdown_ui = self._add_widget(ShutdownScreen())
+        self.main_window.setCentralWidget(self.shutdown_ui)
+        self.shutdown_ui.show()
+        self.shutdown_ui.finished.connect(QApplication.quit)
+
+    def request_shutdown(self):
+        try:
+            self.shutdown_system()
+        except Exception as e:
+            LOG_ERROR("Erro durante desligamento: {}", str(e))
+            QApplication.quit()
     
     def starting_system(self):
-        self.main_window.show_wallpaper()
+        if SystemFlags.SKIP_LOGIN_SCREEN in self.flags:
+            self.show_desktop("developer")
+        else:
+            
+            self.main_window.show_wallpaper()
         
-        #show login screen
-        self.login = LoginScreen()
-        self.login.request_shutdown.connect(self.shutdown_system)
-        self.main_window.setCentralWidget(self.login)
-        self.login.login_success.connect(self.show_desktop)
-        self.login.show()
+            #show login screen
+            self.login = self._add_widget(LoginScreen())
+            self.login.request_shutdown.connect(self.shutdown_system)
+            self.main_window.setCentralWidget(self.login)
+            self.login.login_success.connect(self.show_desktop)
+            self.login.show()

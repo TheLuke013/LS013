@@ -1,18 +1,22 @@
-from PySide6.QtWidgets import QLabel, QSizePolicy, QWidget, QVBoxLayout, QMenu
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import (QLabel, QSizePolicy, QWidget, QVBoxLayout, QMenu, 
+                              QHBoxLayout, QSpacerItem, QSizePolicy)
+from PySide6.QtCore import Qt, Signal, QTimer, QDateTime
 from PySide6.QtGui import QAction
 
 from core.constants import *
 from ui.wallpaper import Wallpaper
 from ui.wallpaper_selector import WallpaperSelector
+from ui.desktop.taskbar import Taskbar
+from ui.desktop.start_menu import StartMenu
 
 class Desktop(QWidget):
     wallpaper_change_requested = Signal(str)
     
-    def __init__(self, username, main_window):
+    def __init__(self, username, system):
         super().__init__()
         self.username = username
-        self.main_window = main_window
+        self.system = system
+        self.main_window = self.system.main_window
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
@@ -20,18 +24,32 @@ class Desktop(QWidget):
         self.setStyleSheet("background: transparent;")
              
         self.main_window.change_wallpaper(DEFAULT_DESKTOP_WALLPAPER_FILENAME)
-        
+            
         self.layout = QVBoxLayout(self)
-        self.setLayout(self.layout)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+        self.setLayout(self.layout)     
         
-        self.taskbar = QLabel(self)
-        self.taskbar.setGeometry(0, self.height() - 40, self.width(), 40)
-        self.taskbar.setStyleSheet("background-color: rgba(0, 0, 0, 150); color: white;")
-        self.taskbar.setText(f"Usu√°rio: {self.username} | LSystem 013")
+        self.desktop_area = QWidget()
+        self.desktop_area.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.layout.addWidget(self.desktop_area)
+        
+        #taskbar
+        self.taskbar = Taskbar(self)
+        self.layout.addWidget(self.taskbar)
+        self.taskbar.start_menu_created.connect(
+            lambda menu: menu.request_shutdown.connect(self.system.request_shutdown)
+        )
+        
+        self.start_menu = StartMenu(self)
+        self.start_menu.hide()
         
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
-        
+    
+    def connect_shutdown_signal(self, start_menu):
+        start_menu.request_shutdown.connect(self.handle_shutdown)
+             
     def show_context_menu(self, pos):
         menu = QMenu(self)
         

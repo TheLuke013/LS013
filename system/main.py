@@ -23,6 +23,10 @@ if __name__ == "__main__":
         if "-skipshutdown" in sys.argv:
             flags |= SystemFlags.SKIP_SHUTDOWN_SCREEN
             print("'-skipshutdown' argument | Pular tela de desligamento")
+        
+        if "-skiplogin" in sys.argv:
+            flags |= SystemFlags.SKIP_LOGIN_SCREEN
+            print("'-skiplogin' argument | Pular tela de login")
     else:
         print("Nenhum argumento extra foi passado")
 

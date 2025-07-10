@@ -86,7 +86,7 @@ class UsersManager:
     
     def create_user(self, username, password, privilege: UserPrivilege = UserPrivilege.GUEST):
         if any(user['username'] == username for user in self.users):
-            LOG_ERROR(f"User '{username}' already exists")
+            LOG_WARN(f"User '{username}' already exists")
             return False
 
         user = User(username, password, privilege)

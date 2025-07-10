@@ -1,4 +1,4 @@
 @echo off
 echo Ligando sistema..
-venv\Scripts\python system\main.py -skipsplash -skipshutdown
+venv\Scripts\python system\main.py -skiplogin -skipsplash -skipshutdown
 pause

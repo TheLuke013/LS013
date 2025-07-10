@@ -4,4 +4,5 @@ class SystemFlags(IntFlag):
     NONE = 0
     SKIP_SPLASH_SCREEN = auto()
     SKIP_SHUTDOWN_SCREEN = auto()
+    SKIP_LOGIN_SCREEN = auto()
     WINDOW_FULLSCREEN = auto()

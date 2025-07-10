@@ -53,7 +53,6 @@ class WallpaperSelector(QWidget):
         """)
     
     def load_wallpapers(self, directory):
-        """Carrega todos os wallpapers do diret√≥rio especificado"""
         for filename in os.listdir(directory):
             if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
                 full_path = os.path.join(directory, filename)
@@ -68,7 +67,6 @@ class WallpaperSelector(QWidget):
                     self.wallpaper_list.addItem(item)
     
     def select_wallpaper(self):
-        """Emite o wallpaper selecionado"""
         selected_items = self.wallpaper_list.selectedItems()
         if selected_items:
             wallpaper_path = selected_items[0].data(Qt.UserRole)
