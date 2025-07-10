@@ -1,13 +1,15 @@
 from PySide6.QtWidgets import (QLabel, QSizePolicy, QWidget, QVBoxLayout, QMenu, 
                               QHBoxLayout, QSpacerItem, QSizePolicy)
 from PySide6.QtCore import Qt, Signal, QTimer, QDateTime
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QFont
 
 from core.constants import *
+from core.log import *
 from ui.wallpaper import Wallpaper
 from ui.wallpaper_selector import WallpaperSelector
 from ui.desktop.taskbar import Taskbar
 from ui.desktop.start_menu import StartMenu
+from ui.desktop.context_menu import ContextMenu
 
 class Desktop(QWidget):
     wallpaper_change_requested = Signal(str)
@@ -49,15 +51,27 @@ class Desktop(QWidget):
     
     def connect_shutdown_signal(self, start_menu):
         start_menu.request_shutdown.connect(self.handle_shutdown)
-             
+    
     def show_context_menu(self, pos):
-        menu = QMenu(self)
+        menu = ContextMenu(self)
+        menu.setFont(QFont("Segoe UI", 10))
         
-        change_wallpaper_action = QAction("Trocar Papel de Parede", self)
-        change_wallpaper_action.triggered.connect(self.open_wallpaper_selector)
-        menu.addAction(change_wallpaper_action)
+        menu.wallpaper_change_requested.connect(self.open_wallpaper_selector)
+        menu.create_folder_requested.connect(self.create_new_folder)
+        menu.refresh_requested.connect(self.refresh_desktop)
+        
+        menu.add_custom_action("Abrir Terminal", callback=self.open_terminal)
         
         menu.exec_(self.mapToGlobal(pos))
+    
+    def create_new_folder(self):
+        LOG_WARN("Implement method: create_new_folder")
+    
+    def refresh_desktop(self):
+        LOG_WARN("Implement method: refresh_desktop")
+    
+    def open_terminal(self):
+        LOG_WARN("Implement method: open_terminal")
     
     def open_wallpaper_selector(self):
         self.wallpaper_selector = WallpaperSelector("")
