@@ -1,15 +1,17 @@
-from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import QObject, Signal
+from PySide6.QtWidgets import QApplication, QGraphicsOpacityEffect
+from PySide6.QtCore import QObject, Signal, QPropertyAnimation, QEasingCurve, QTimer, QPoint, QParallelAnimationGroup
+from PySide6.QtGui import QColor, QPainter
 import os
 
 from core.system_main_window import SystemMainWindow, WindowMode
 from core.flags import SystemFlags
 from . import constants as CONSTS
 from .log import *
-from ui.splash_screen import SplashScreen
-from ui.login_screen import LoginScreen
-from ui.shutdown_screen import ShutdownScreen
-from ui.desktop import Desktop
+from ui.internal.splash_screen import SplashScreen
+from ui.internal.login_screen import LoginScreen
+from ui.internal.shutdown_screen import ShutdownScreen
+from ui.desktop.desktop import Desktop
+from ui.internal.loading_screen import LoadingScreen
 from core.users_manager import UsersManager, UserPrivilege
 
 class LSystem013(QObject):
@@ -31,7 +33,9 @@ class LSystem013(QObject):
         self.users_manager.create_user("admin", "123", UserPrivilege.ADMIN)
 
         self.main_window = SystemMainWindow()
+        
         self.main_window.set_wallpaper(CONSTS.DEFAULT_WALLPAPER_FILENAME)
+        
         self.main_window.show(self.window_mode)
 
         #show system splash screen
@@ -39,7 +43,7 @@ class LSystem013(QObject):
             self.starting_system()
         else:
             self.show_splash_screen()
-    
+        
     def show_splash_screen(self):
         self.main_window.hide_wallpaper()
         self.splash = SplashScreen()
@@ -49,10 +53,47 @@ class LSystem013(QObject):
         self.splash.show()
     
     def show_desktop(self, username):
-        self.desktop = Desktop(username)
-        self.main_window.setCentralWidget(self.desktop)
-        self.desktop.show()
+        self.loading = LoadingScreen("Preparando o desktop...")
+        self.loading.setFixedSize(self.main_window.size())
+        self.main_window.setCentralWidget(self.loading)
+        self.loading.show()
+        
+        QTimer.singleShot(1500, lambda: self._finish_desktop_load(username))
 
+    def _finish_desktop_load(self, username):
+        self.desktop = Desktop(username, self.main_window)
+        self.desktop.wallpaper_change_requested.connect(self.change_wallpaper)
+        
+        self.desktop.setFixedSize(self.main_window.size())   
+        self.main_window.setCentralWidget(self.desktop)
+        
+        opacity_effect = QGraphicsOpacityEffect(self.desktop)
+        self.desktop.setGraphicsEffect(opacity_effect)
+        opacity_effect.setOpacity(1)
+        
+        self.desktop.show()
+        
+        self.loading.deleteLater()
+    
+    def change_wallpaper(self, new_wp_path):
+        """Método para trocar o wallpaper"""
+        if not hasattr(self, 'main_window') or not self.main_window:
+            LOG_ERROR("Main window not available")
+            return False
+        
+        QApplication.processEvents()
+        
+        success = self.main_window.change_wallpaper(new_wp_path)
+        
+        if success:
+            LOG_INFO("Wallpaper changed successfully to: {}", new_wp_path)
+            self.main_window.repaint()
+            QApplication.processEvents()
+        else:
+            LOG_ERROR("Failed to change wallpaper to: {}", new_wp_path)
+        
+        return success
+            
     def shutdown_system(self):
         if SystemFlags.SKIP_SHUTDOWN_SCREEN in self.flags:
             QApplication.quit()

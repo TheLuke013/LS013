@@ -11,5 +11,6 @@ USERS_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..",
 
 #file dir
 USERS_DATA_FILENAME = os.path.abspath(os.path.join(USERS_PATH, "users.json"))
-DEFAULT_WALLPAPER_FILENAME = os.path.abspath(os.path.join(WALLPAPERS_PATH, "macos-monterey-wwdc-21-stock-dark-mode-5k-3840x2160-5585.jpg"))
+DEFAULT_WALLPAPER_FILENAME = os.path.abspath(os.path.join(WALLPAPERS_PATH, "login.jpg"))
+DEFAULT_DESKTOP_WALLPAPER_FILENAME = os.path.abspath(os.path.join(WALLPAPERS_PATH, "desktop_2.png"))
 LOADING_SPINNER_ICON = os.path.abspath(os.path.join(ICONS_PATH, "loading_spinner.gif"))

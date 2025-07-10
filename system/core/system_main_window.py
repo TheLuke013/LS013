@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QMainWindow, QApplication
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from enum import Enum
 
 from .log import *
@@ -36,6 +36,41 @@ class SystemMainWindow(QMainWindow):
           self.wallpaper.width(),
           self.wallpaper.height())
     
+    def change_wallpaper(self, new_wp_path):
+        """Altera o wallpaper em tempo de execução"""
+        try:
+            # Esconde o wallpaper atual temporariamente
+            if self.wallpaper:
+                self.wallpaper.hide()
+            
+            # Cria novo wallpaper
+            new_wallpaper = Wallpaper(new_wp_path, parent=self)
+            new_wallpaper.lower()
+            
+            # Remove o wallpaper antigo se existir
+            if hasattr(self, 'wallpaper') and self.wallpaper:
+                self.wallpaper.setParent(None)
+                self.wallpaper.deleteLater()
+            
+            # Atualiza referência
+            self.wallpaper = new_wallpaper
+            
+            # Atualiza tamanho e mostra
+            self.wallpaper.update_wallpaper(self.width(), self.height())
+            self.wallpaper.setGeometry(0, 0, self.width(), self.height())
+            self.wallpaper.show()
+            self.wallpaper.lower()  # Garante que fica atrás de tudo
+            
+            LOG_INFO("Wallpaper changed to: {}", new_wp_path)
+            return True
+            
+        except Exception as e:
+            LOG_ERROR("Failed to change wallpaper: {}", e)
+            # Tenta restaurar o wallpaper anterior
+            if hasattr(self, 'wallpaper') and self.wallpaper:
+                self.wallpaper.show()
+            return False
+            
     def hide_wallpaper(self):
         if self.wallpaper:
             self.wallpaper.hide()
@@ -58,12 +93,11 @@ class SystemMainWindow(QMainWindow):
             LOG_WARN("No wallpaper loaded to remove")
     
     def resizeEvent(self, event):
-        if self.wallpaper and hasattr(self, 'wallpaper'):
-            self.wallpaper.update_wallpaper(self.width(), self.height())
-            
-            self.wallpaper.setGeometry(0, 0, self.width(), self.height())
-            
         super().resizeEvent(event)
+        if hasattr(self, 'wallpaper') and self.wallpaper:
+            self.wallpaper.update_wallpaper(self.width(), self.height())
+            self.wallpaper.setGeometry(0, 0, self.width(), self.height())
+            self.wallpaper.lower()  # Garante que fica atrás
     
     def show(self, mode: WindowMode):
         if mode == WindowMode.WINDOWED:
