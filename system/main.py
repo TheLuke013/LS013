@@ -9,9 +9,22 @@ from core.system import LSystem013
 from core.flags import SystemFlags
 
 if __name__ == "__main__":
-    flags = SystemFlags.SKIP_SPLASH_SCREEN | SystemFlags.SKIP_SHUTDOWN_SCREEN #for develop tests
-    #flags = SystemFlags.WINDOW_FULLSCREEN #for release
-    #flags = SystemFlags.NONE
+    flags = SystemFlags.NONE
+    
+    if len(sys.argv) > 1:
+        if "-fullscreen" in sys.argv:
+            flags |= SystemFlags.WINDOW_FULLSCREEN
+            print("'-fullscreen' argument | Ficar em tela cheia")
+        
+        if "-skipsplash" in sys.argv:
+            flags |= SystemFlags.SKIP_SPLASH_SCREEN 
+            print("'-skipsplash' argument | Pular tela de splash")
+        
+        if "-skipshutdown" in sys.argv:
+            flags |= SystemFlags.SKIP_SHUTDOWN_SCREEN
+            print("'-skipshutdown' argument | Pular tela de desligamento")
+    else:
+        print("Nenhum argumento extra foi passado")
 
     app = QApplication(sys.argv)
     ls013 = LSystem013(flags)
