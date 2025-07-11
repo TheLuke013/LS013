@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel, 
                              QPushButton, QFrame, QMessageBox, QScrollArea)
-from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QPoint, Signal, QSize
+from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QPoint, Signal, QSize, QTimer, QEvent
 from PySide6.QtGui import QColor, QBrush, QLinearGradient, QPainter, QIcon
 
 from system.core.constants import *
@@ -50,7 +50,22 @@ class StartMenu(QFrame):
         self.animation = QPropertyAnimation(self, b"pos")
         self.animation.setDuration(300)
         self.animation.setEasingCurve(QEasingCurve.OutQuad)
+        
+        self.is_animating = False
+        self.is_showing = False
+        self.setWindowModality(Qt.NonModal)
+        self.installEventFilter(self)
     
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.WindowDeactivate:
+            if self.isVisible():
+                QTimer.singleShot(100, self.check_focus)
+        return super().eventFilter(obj, event)
+
+    def check_focus(self):
+        if not self.underMouse() and not self.isActiveWindow():
+            self.hide()
+            
     def _setup_user_area(self):
         user_frame = QFrame()
         user_frame.setStyleSheet("""
@@ -124,6 +139,9 @@ class StartMenu(QFrame):
         self.main_layout.addStretch()
     
     def toggle_programs(self):
+        if self.is_animating:
+            return
+            
         if not self.programs_scroll.isVisible():
             self.load_applications()
         self.programs_scroll.setVisible(not self.programs_scroll.isVisible())
@@ -176,8 +194,10 @@ class StartMenu(QFrame):
             self.programs_container.layout().addWidget(btn)
     
     def open_application(self, app_id: str):
+        self.removeEventFilter(self)
         self.open_app.emit(app_id)
         self.hide()
+        QTimer.singleShot(200, lambda: self.installEventFilter(self))
         
     def shutdown(self):
         confirm = QMessageBox.question(
@@ -192,6 +212,12 @@ class StartMenu(QFrame):
             self.request_shutdown.emit()
     
     def showEvent(self, event):
+        if self.is_animating:
+            return
+            
+        self.is_animating = True
+        self.is_showing = True
+        
         taskbar = self.parent().taskbar
         start_button_pos = taskbar.start_button.mapToGlobal(QPoint(0, 0))
         
@@ -201,18 +227,23 @@ class StartMenu(QFrame):
         self.move(start_pos)
         self.animation.setStartValue(start_pos)
         self.animation.setEndValue(end_pos)
+        self.animation.finished.connect(lambda: setattr(self, 'is_animating', False))
         self.animation.start()
         
         super().showEvent(event)
-    
+
     def hide(self):
-        taskbar = self.parent().taskbar
-        start_button_pos = taskbar.start_button.mapToGlobal(QPoint(0, 0))
-        
-        self.animation.setStartValue(self.pos())
-        self.animation.setEndValue(QPoint(start_button_pos.x(), start_button_pos.y() + 20))
-        self.animation.finished.connect(super().hide)
-        self.animation.start()
+        if self.underMouse():
+            return
+            
+        if self.isActiveWindow():
+            return
+            
+        super().hide()
+
+    def _finalize_hide(self):
+        self.is_animating = False
+        super().hide()
     
     def paintEvent(self, event):
         painter = QPainter(self)

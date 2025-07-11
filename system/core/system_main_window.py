@@ -39,34 +39,28 @@ class SystemMainWindow(QMainWindow):
     def change_wallpaper(self, new_wp_path):
         """Altera o wallpaper em tempo de execução"""
         try:
-            # Esconde o wallpaper atual temporariamente
             if self.wallpaper:
                 self.wallpaper.hide()
             
-            # Cria novo wallpaper
             new_wallpaper = Wallpaper(new_wp_path, parent=self)
             new_wallpaper.lower()
             
-            # Remove o wallpaper antigo se existir
             if hasattr(self, 'wallpaper') and self.wallpaper:
                 self.wallpaper.setParent(None)
                 self.wallpaper.deleteLater()
             
-            # Atualiza referência
             self.wallpaper = new_wallpaper
             
-            # Atualiza tamanho e mostra
             self.wallpaper.update_wallpaper(self.width(), self.height())
             self.wallpaper.setGeometry(0, 0, self.width(), self.height())
             self.wallpaper.show()
-            self.wallpaper.lower()  # Garante que fica atrás de tudo
+            self.wallpaper.lower()
             
             LOG_INFO("Wallpaper changed to: {}", new_wp_path)
             return True
             
         except Exception as e:
             LOG_ERROR("Failed to change wallpaper: {}", e)
-            # Tenta restaurar o wallpaper anterior
             if hasattr(self, 'wallpaper') and self.wallpaper:
                 self.wallpaper.show()
             return False
@@ -97,7 +91,7 @@ class SystemMainWindow(QMainWindow):
         if hasattr(self, 'wallpaper') and self.wallpaper:
             self.wallpaper.update_wallpaper(self.width(), self.height())
             self.wallpaper.setGeometry(0, 0, self.width(), self.height())
-            self.wallpaper.lower()  # Garante que fica atrás
+            self.wallpaper.lower()
     
     def show(self, mode: WindowMode):
         if mode == WindowMode.WINDOWED:

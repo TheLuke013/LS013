@@ -110,8 +110,8 @@ class AppsManager:
                 "manifest": AppManifest(
                     app_id=SYSTEM_APP_ID,
                     name="System",
-                    package="system.core.system",
-                    main_class="LSystem013",
+                    package="system.core.system_app",
+                    main_class="SystemApp",
                     version=AppVersion(1, 0, 0),
                     description="Core system components"
                 ),

@@ -8,8 +8,8 @@
             "minor": 0,
             "patch": 0
         },
-        "package": "system.core.system",
-        "main_class": "LSystem013",
+        "package": "system.core.system_app",
+        "main_class": "SystemApp",
         "dependencies": [],
         "author": null,
         "license": null,

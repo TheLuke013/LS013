@@ -48,7 +48,6 @@ class LSystem013(QObject):
             self.show_splash_screen()
     
     def launch_application(self, app_id: str):
-        """Método chamado quando um app é iniciado pelo menu"""
         manager = AppsManager()
         try:
             app = manager.get_app(app_id)
@@ -60,12 +59,10 @@ class LSystem013(QObject):
             self.show_error_message(f"Erro crítico: {str(e)}")
             
     def _add_widget(self, widget):
-        """Adiciona um widget à lista de controle"""
         self._active_widgets.append(widget)
         return widget
 
     def _cleanup_widgets(self):
-        """Limpeza segura de todos os widgets"""
         for widget in self._active_widgets[:]:
             try:
                 if widget and widget.parent() is None:
@@ -107,7 +104,6 @@ class LSystem013(QObject):
         self.loading.deleteLater()
     
     def change_wallpaper(self, new_wp_path):
-        """Método para trocar o wallpaper"""
         if not hasattr(self, 'main_window') or not self.main_window:
             LOG_ERROR("Main window not available")
             return False

@@ -70,7 +70,7 @@ class Desktop(QWidget):
     def connect_start_menu_signals(self, start_menu):
         """Conecta todos os sinais do menu iniciar"""
         start_menu.request_shutdown.connect(self.system.request_shutdown)
-        start_menu.open_app.connect(self.launch_application)  # Nova conexão
+        start_menu.open_app.connect(self.launch_application)
     
     def launch_application(self, app_id: str):
         try:
@@ -90,17 +90,15 @@ class Desktop(QWidget):
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
 
-            # Criação robusta da instância
             if hasattr(module, 'create_app_instance'):
                 app_instance = module.create_app_instance(parent=self)
             else:
                 app_class = getattr(module, app.manifest.main_class)
-                app_instance = app_class(parent=self)  # Passa a janela principal como parent
+                app_instance = app_class(parent=self)
 
             if not app_instance:
                 raise RuntimeError("Instância do aplicativo não foi criada")
 
-            # Configuração especial para QMainWindow
             if isinstance(app_instance, QMainWindow):
                 app_instance.setWindowFlags(
                     Qt.Window | 
@@ -111,8 +109,8 @@ class Desktop(QWidget):
                 app_instance.setWindowModality(Qt.NonModal)
                 
             app_instance.show()
-            app_instance.raise_()  # Traz para frente
-            app_instance.activateWindow()  # Foca a janela
+            app_instance.raise_()
+            app_instance.activateWindow()
 
         except Exception as e:
             LOG_ERROR(f"Falha ao iniciar app {app_id}: {str(e)}")

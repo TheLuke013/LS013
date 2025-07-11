@@ -32,7 +32,6 @@ class Taskbar(QWidget):
         self.start_button.mousePressEvent = self.toggle_start_menu
         layout.addWidget(self.start_button)
 
-        #applications area (empty for now)
         layout.addStretch()
 
         self.notification_area = QWidget()
@@ -70,7 +69,6 @@ class Taskbar(QWidget):
             self.start_menu.show()
     
     def position_start_menu(self):
-        """Posiciona o menu iniciar acima da taskbar"""
         if self.start_menu:
             pos = self.mapToGlobal(self.start_button.pos())
             pos.setY(pos.y() - self.start_menu.height() + 10)
@@ -92,7 +90,6 @@ class Taskbar(QWidget):
         super().paintEvent(event)
 
     def update_time(self):
-        """Atualiza o rel√≥gio e a data com idioma local"""
         current_time = QDateTime.currentDateTime()
 
         self.clock_label.setText(current_time.toString("HH:mm"))
