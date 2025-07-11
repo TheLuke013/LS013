@@ -2,3 +2,4 @@ pyside6
 loguru
 bcrypt
 chardet
+psutil
