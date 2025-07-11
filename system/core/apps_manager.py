@@ -7,7 +7,21 @@ from core.constants import *
 from .log import *
 
 class AppsManager:
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance.__init__()
+        return cls._instance
+    
     def __init__(self):
+        if not hasattr(self, 'apps'):
+            self.apps = []
+            self.active_apps = []
+            self.apps_data_file = APPS_DATA_FILENAME
+            self._load_apps()
+        
         self.apps: List[App] = []
         self.active_apps: List[App] = []
         self.apps_data_file = APPS_DATA_FILENAME
@@ -30,8 +44,10 @@ class AppsManager:
                 for app_data in apps_data:
                     try:
                         manifest = AppManifest.from_dict(app_data)
-                        app = App(manifest)
+                        icon_path = app_data.get("icon_path")
+                        app = App(manifest, icon_path=icon_path)
                         self.apps.append(app)
+                        LOG_INFO(f"Loaded app: {app.name}, icon: {app.icon_path}")
                     except Exception as e:
                         LOG_ERROR(f"Failed to load app {app_data.get('name')}: {str(e)}")
                         continue
@@ -46,14 +62,18 @@ class AppsManager:
             LOG_ERROR("Invalid JSON format in apps registry")
             self._create_default_registry()
         except Exception as e:
-            LOG_FATAL(f"Failed to load apps: {str(e)}")
+            LOG_CRITICAL(f"Failed to load apps: {str(e)}")
             self._create_default_registry()
     
     def _create_default_registry(self) -> None:  
         self.install_default_apps()
     
     def _save_apps(self) -> None:
-        apps_data = [app.manifest.to_dict() for app in self.apps]
+        apps_data = []
+        for app in self.apps:
+            app_data = app.to_dict()
+            apps_data.append(app_data)
+        
         with open(self.apps_data_file, "w", encoding="utf-8") as f:
             json.dump(apps_data, f, indent=4)
     
@@ -83,26 +103,45 @@ class AppsManager:
                 return app
         raise ValueError(f"App with ID {app_id} not found")
     
+    
     def install_default_apps(self) -> None:
-        default_apps = [
-            AppManifest(
-                app_id=SYSTEM_APP_ID,
-                name="System",
-                package="core.system",
-                main_class="LSystem013",
-                version=AppVersion(1, 0, 0),
-                description="Core system components"
-            ),
-            AppManifest(
-                app_id=FILE_EXPLORER_APP_ID,
-                name="File Explorer",
-                package="apps.explorer",
-                main_class="FileExplorer",
-                version=AppVersion(1, 0, 0),
-                description="Basic file manager"
-            )
+        default_apps_data = [
+            {
+                "manifest": AppManifest(
+                    app_id=SYSTEM_APP_ID,
+                    name="System",
+                    package="core.system",
+                    main_class="LSystem013",
+                    version=AppVersion(1, 0, 0),
+                    description="Core system components"
+                ),
+                "icon": SYSTEM_ICON
+            },
+            {
+                "manifest": AppManifest(
+                    app_id=FILE_EXPLORER_APP_ID,
+                    name="File Explorer",
+                    package="apps.explorer",
+                    main_class="FileExplorer",
+                    version=AppVersion(1, 0, 0),
+                    description="Basic file manager"
+                ),
+                "icon": EXPLORER_ICON
+            }
         ]
         
-        self.apps.extend([App(manifest) for manifest in default_apps])
-        self._save_apps()
-        LOG_INFO("Installed default applications")
+        for app_data in default_apps_data:
+            if not any(app.app_id == app_data["manifest"].app_id for app in self.apps):
+                try:
+                    new_app = App(
+                        manifest=app_data["manifest"],
+                        icon_path=app_data["icon"]
+                    )
+                    self.apps.append(new_app)
+                    LOG_INFO(f"Added default app: {app_data['manifest'].name}")
+                except Exception as e:
+                    LOG_ERROR(f"Failed to add default app {app_data['manifest'].name}: {str(e)}")
+        
+        if len(default_apps_data) > 0:
+            self._save_apps()
+            LOG_INFO(f"Installed {len(default_apps_data)} default applications")

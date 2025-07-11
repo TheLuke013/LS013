@@ -12,7 +12,8 @@
         "main_class": "LSystem013",
         "dependencies": [],
         "author": null,
-        "license": null
+        "license": null,
+        "icon_path": "system/resources/icons/system.png"
     },
     {
         "id": "73589d73-14f5-4002-857f-32d0edb0c3ce",
@@ -27,6 +28,7 @@
         "main_class": "FileExplorer",
         "dependencies": [],
         "author": null,
-        "license": null
+        "license": null,
+        "icon_path": "system/resources/icons/explorer.png"
     }
 ]
