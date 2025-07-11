@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt, QTimer
 from enum import Enum
 
 from .log import *
-from ui.wallpaper import Wallpaper
+from system.ui.wallpaper import Wallpaper
 
 class WindowMode(Enum):
     WINDOWED = 0

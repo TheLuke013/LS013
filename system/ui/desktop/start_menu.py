@@ -3,9 +3,9 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QLabel,
 from PySide6.QtCore import Qt, QPropertyAnimation, QEasingCurve, QPoint, Signal, QSize
 from PySide6.QtGui import QColor, QBrush, QLinearGradient, QPainter, QIcon
 
-from core.constants import *
-from core.apps_manager import AppsManager
-from core.app import App 
+from system.core.constants import *
+from system.core.apps_manager import AppsManager
+from system.core.app import App 
 
 class StartMenu(QFrame):
     request_shutdown = Signal()

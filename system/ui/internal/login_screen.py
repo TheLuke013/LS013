@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import QApplication
 from PySide6.QtWidgets import QMessageBox
 
-from core.auth import Auth
+from system.core.auth import Auth
 
 class LoginScreen(QWidget):
     login_success = Signal(str)

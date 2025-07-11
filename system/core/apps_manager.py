@@ -2,8 +2,8 @@ import os
 import json
 from typing import List
 
-from core.app import App, AppManifest, AppVersion
-from core.constants import *
+from system.core.app import App, AppManifest, AppVersion
+from system.core.constants import *
 from .log import *
 
 class AppsManager:
@@ -62,7 +62,7 @@ class AppsManager:
             LOG_ERROR("Invalid JSON format in apps registry")
             self._create_default_registry()
         except Exception as e:
-            LOG_CRITICAL(f"Failed to load apps: {str(e)}")
+            LOG_FATAL(f"Failed to load apps: {str(e)}")
             self._create_default_registry()
     
     def _create_default_registry(self) -> None:  
@@ -110,7 +110,7 @@ class AppsManager:
                 "manifest": AppManifest(
                     app_id=SYSTEM_APP_ID,
                     name="System",
-                    package="core.system",
+                    package="system.core.system",
                     main_class="LSystem013",
                     version=AppVersion(1, 0, 0),
                     description="Core system components"
@@ -127,6 +127,17 @@ class AppsManager:
                     description="Basic file manager"
                 ),
                 "icon": EXPLORER_ICON
+            },
+            {
+                "manifest": AppManifest(
+                    app_id=KINGDOM_IDE_ID,
+                    name="Kingdom IDE",
+                    package="apps.kingdom_ide.app",
+                    main_class="KingdomIDE",
+                    version=AppVersion(1, 0, 0),
+                    description="A very lightweight IDE that's great for projects"
+                ),
+                "icon": None
             }
         ]
         

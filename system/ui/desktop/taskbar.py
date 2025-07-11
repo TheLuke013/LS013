@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QLabel, QSizePolicy
 from PySide6.QtCore import Qt, QTimer, QDateTime, QLocale, Signal
 from PySide6.QtGui import QFont, QPainter, QLinearGradient, QColor, QBrush, QMouseEvent
 
-from ui.desktop.start_menu import StartMenu
+from system.ui.desktop.start_menu import StartMenu
 
 class Taskbar(QWidget):
     start_menu_created = Signal(object)
@@ -66,7 +66,15 @@ class Taskbar(QWidget):
         if self.start_menu.isVisible():
             self.start_menu.hide()
         else:
+            self.position_start_menu()
             self.start_menu.show()
+    
+    def position_start_menu(self):
+        """Posiciona o menu iniciar acima da taskbar"""
+        if self.start_menu:
+            pos = self.mapToGlobal(self.start_button.pos())
+            pos.setY(pos.y() - self.start_menu.height() + 10)
+            self.start_menu.move(pos)
 
     def paintEvent(self, event):
         painter = QPainter(self)

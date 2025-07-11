@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy
 from PySide6.QtCore import Qt, QTimer, QSize
 from PySide6.QtGui import QMovie
 
-from core.constants import *
+from system.core.constants import *
 
 class LoadingScreen(QWidget):
     def __init__(self, message="Carregando..."):

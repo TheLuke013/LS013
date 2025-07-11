@@ -8,7 +8,7 @@
             "minor": 0,
             "patch": 0
         },
-        "package": "core.system",
+        "package": "system.core.system",
         "main_class": "LSystem013",
         "dependencies": [],
         "author": null,
@@ -30,5 +30,21 @@
         "author": null,
         "license": null,
         "icon_path": "system/resources/icons/explorer.png"
+    },
+    {
+        "id": "e6dcd6aa-de3e-4547-a4c9-97010ee1b017",
+        "name": "Kingdom IDE",
+        "description": "A very lightweight IDE that's great for projects",
+        "version": {
+            "major": 1,
+            "minor": 0,
+            "patch": 0
+        },
+        "package": "apps.kingdom_ide.app",
+        "main_class": "KingdomIDE",
+        "dependencies": [],
+        "author": null,
+        "license": null,
+        "icon_path": null
     }
 ]

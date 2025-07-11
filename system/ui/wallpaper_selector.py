@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt, Signal, QSize, QThread, QMutex, QWaitCondition
 from PySide6.QtGui import QPixmap, QIcon, QImage, QPainter
 import os
 import time
-from core.constants import *
+from system.core.constants import *
 
 class ThumbnailGenerator(QThread):
     progress_updated = Signal(int, int)

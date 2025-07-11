@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QLabel
 
-from core.log import *
+from system.core.log import *
 
 class Wallpaper(QLabel):
     def __init__(self, wp_path, parent=None):

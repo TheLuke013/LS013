@@ -3,17 +3,17 @@ from PySide6.QtCore import QObject, Signal, QPropertyAnimation, QEasingCurve, QT
 from PySide6.QtGui import QColor, QPainter
 import os
 
-from core.system_main_window import SystemMainWindow, WindowMode
-from core.flags import SystemFlags
+from system.core.system_main_window import SystemMainWindow, WindowMode
+from system.core.flags import SystemFlags
 from . import constants as CONSTS
 from .log import *
-from ui.internal.splash_screen import SplashScreen
-from ui.internal.login_screen import LoginScreen
-from ui.internal.shutdown_screen import ShutdownScreen
-from ui.desktop.desktop import Desktop
-from ui.internal.loading_screen import LoadingScreen
-from core.users_manager import UsersManager, UserPrivilege
-from core.apps_manager import AppsManager
+from system.ui.internal.splash_screen import SplashScreen
+from system.ui.internal.login_screen import LoginScreen
+from system.ui.internal.shutdown_screen import ShutdownScreen
+from system.ui.desktop.desktop import Desktop
+from system.ui.internal.loading_screen import LoadingScreen
+from system.core.users_manager import UsersManager, UserPrivilege
+from system.core.apps_manager import AppsManager
 
 class LSystem013(QObject):
     def __init__(self, flags: SystemFlags):
@@ -47,6 +47,18 @@ class LSystem013(QObject):
         else:
             self.show_splash_screen()
     
+    def launch_application(self, app_id: str):
+        """Método chamado quando um app é iniciado pelo menu"""
+        manager = AppsManager()
+        try:
+            app = manager.get_app(app_id)
+            success, message = AppLauncher.launch_app(app)
+            
+            if not success:
+                self.show_error_message(message)
+        except Exception as e:
+            self.show_error_message(f"Erro crítico: {str(e)}")
+            
     def _add_widget(self, widget):
         """Adiciona um widget à lista de controle"""
         self._active_widgets.append(widget)

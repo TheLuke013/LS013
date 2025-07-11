@@ -31,3 +31,4 @@ DOCUMENT_ICON = os.path.join(ICONS_PATH, "document.png")
 #default apps id
 SYSTEM_APP_ID = "a454c8f5-2b43-4fd1-a485-077a3fe891a1"
 FILE_EXPLORER_APP_ID = "73589d73-14f5-4002-857f-32d0edb0c3ce"
+KINGDOM_IDE_ID = "e6dcd6aa-de3e-4547-a4c9-97010ee1b017"

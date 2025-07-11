@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QMovie
 
-from core.constants import *
+from system.core.constants import *
 
 class ShutdownScreen(QWidget):
     finished = Signal()
