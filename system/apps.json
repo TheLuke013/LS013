@@ -1,0 +1,32 @@
+[
+    {
+        "id": "a454c8f5-2b43-4fd1-a485-077a3fe891a1",
+        "name": "System",
+        "description": "Core system components",
+        "version": {
+            "major": 1,
+            "minor": 0,
+            "patch": 0
+        },
+        "package": "core.system",
+        "main_class": "LSystem013",
+        "dependencies": [],
+        "author": null,
+        "license": null
+    },
+    {
+        "id": "73589d73-14f5-4002-857f-32d0edb0c3ce",
+        "name": "File Explorer",
+        "description": "Basic file manager",
+        "version": {
+            "major": 1,
+            "minor": 0,
+            "patch": 0
+        },
+        "package": "apps.explorer",
+        "main_class": "FileExplorer",
+        "dependencies": [],
+        "author": null,
+        "license": null
+    }
+]

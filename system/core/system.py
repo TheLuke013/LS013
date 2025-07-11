@@ -13,6 +13,7 @@ from ui.internal.shutdown_screen import ShutdownScreen
 from ui.desktop.desktop import Desktop
 from ui.internal.loading_screen import LoadingScreen
 from core.users_manager import UsersManager, UserPrivilege
+from core.apps_manager import AppsManager
 
 class LSystem013(QObject):
     def __init__(self, flags: SystemFlags):
@@ -21,6 +22,7 @@ class LSystem013(QObject):
         self.login = None
         self.shutdown_ui = None
         self._active_widgets = []
+        self.apps_manager = None
 
         self.window_mode = WindowMode.MAXIMIZED
         if SystemFlags.WINDOW_FULLSCREEN in self.flags:
@@ -36,9 +38,7 @@ class LSystem013(QObject):
         self.users_manager.create_user("admin", "123", UserPrivilege.ADMIN)
 
         self.main_window = SystemMainWindow()
-        
         self.main_window.set_wallpaper(CONSTS.DEFAULT_WALLPAPER_FILENAME)
-        
         self.main_window.show(self.window_mode)
 
         #show system splash screen
@@ -133,8 +133,13 @@ class LSystem013(QObject):
         except Exception as e:
             LOG_ERROR("Erro durante desligamento: {}", str(e))
             QApplication.quit()
-    
+            
+    def load_applications(self):
+        self.apps_manager = AppsManager()
+             
     def starting_system(self):
+        self.load_applications()
+        
         if SystemFlags.SKIP_LOGIN_SCREEN in self.flags:
             self.show_desktop("developer")
         else:
