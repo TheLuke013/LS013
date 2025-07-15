@@ -3,10 +3,35 @@ from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QMenu, QHeaderView,
     QInputDialog, QMessageBox
 )
-from PySide6.QtCore import Qt, QDir, Signal, QSettings, QModelIndex
+from PySide6.QtCore import Qt, QDir, Signal, QSettings, QModelIndex, QSortFilterProxyModel
 from PySide6.QtGui import QAction
 import os
 import shutil
+
+class FileSystemFilterProxyModel(QSortFilterProxyModel):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.hidden_folders = ["__pycache__", ".git", ".idea", "venv", "env", "node_modules"]
+    
+    def filterAcceptsRow(self, source_row, source_parent):
+        index = self.sourceModel().index(source_row, 0, source_parent)
+        name = self.sourceModel().fileName(index)
+        
+        if self.sourceModel().isDir(index) and name in self.hidden_folders:
+            return False
+            
+        return True
+    
+    def lessThan(self, left, right):
+        left_is_dir = self.sourceModel().isDir(left)
+        right_is_dir = self.sourceModel().isDir(right)
+        
+        if left_is_dir and not right_is_dir:
+            return True
+        if not left_is_dir and right_is_dir:
+            return False
+            
+        return left.data().lower() < right.data().lower()
 
 class FileExplorer(QDockWidget):
     file_opened = Signal(str)
@@ -22,6 +47,16 @@ class FileExplorer(QDockWidget):
         
         self.setup_ui()
         self.setup_connections()
+    
+    def add_hidden_folder(self, folder_name):
+        if folder_name not in self.proxy_model.hidden_folders:
+            self.proxy_model.hidden_folders.append(folder_name)
+            self.proxy_model.invalidateFilter()
+
+    def remove_hidden_folder(self, folder_name):
+        if folder_name in self.proxy_model.hidden_folders:
+            self.proxy_model.hidden_folders.remove(folder_name)
+            self.proxy_model.invalidateFilter()
         
     def setup_ui(self):
         container = QWidget()
@@ -33,12 +68,16 @@ class FileExplorer(QDockWidget):
         self.model.setNameFilters(["*.py", "*.txt", "*.md", "*.json", "*.bat", "*.vbs", "*.gitignore"])
         self.model.setNameFilterDisables(False)
         
+        self.proxy_model = FileSystemFilterProxyModel()
+        self.proxy_model.setSourceModel(self.model)
+        
         self.tree = QTreeView()
-        self.tree.setModel(self.model)
-        self.tree.setRootIndex(self.model.index(self._root_path))
+        self.tree.setModel(self.proxy_model)
+        self.tree.setRootIndex(self.proxy_model.mapFromSource(self.model.index(self._root_path)))
         self.tree.setAnimated(True)
         self.tree.setIndentation(20)
         self.tree.setSortingEnabled(True)
+        self.tree.sortByColumn(0, Qt.SortOrder.AscendingOrder)
         self.tree.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         
         self.tree.setSelectionMode(QTreeView.SelectionMode.ExtendedSelection)
@@ -75,6 +114,18 @@ class FileExplorer(QDockWidget):
         self.tree.doubleClicked.connect(self.on_file_double_clicked)
         self.tree.customContextMenuRequested.connect(self.show_context_menu)
     
+    def on_file_double_clicked(self, index):
+        if not index.isValid():
+            return
+            
+        source_index = self.proxy_model.mapToSource(index)
+        path = self.model.filePath(source_index)
+        
+        if self.model.isDir(source_index):
+            self.tree.setExpanded(index, not self.tree.isExpanded(index))
+        else:
+            self.file_opened.emit(path)
+            
     def closeEvent(self, event):
         self.settings.setValue("header_state", self.tree.header().saveState())
         super().closeEvent(event)
@@ -145,19 +196,24 @@ class FileExplorer(QDockWidget):
             }
         """)
     
-    def on_file_double_clicked(self, index):
-        """Abre o arquivo quando double clicked"""
-        path = self.model.filePath(index)
-        if self.model.isDir(index):
-            self.tree.setExpanded(index, not self.tree.isExpanded(index))
-        else:
-            self.file_opened.emit(path)
-    
     def get_selected_path(self):
         indexes = self.tree.selectedIndexes()
         if indexes:
-            return self.model.filePath(indexes[0])
+            source_index = self.proxy_model.mapToSource(indexes[0])
+            return self.model.filePath(source_index)
         return None
+
+    def refresh_tree(self):
+        current_path = self.get_selected_path()
+        root_path = self.model.rootPath()
+        
+        self.model.setRootPath("")
+        self.model.setRootPath(root_path)
+        
+        if current_path:
+            source_index = self.model.index(current_path)
+            proxy_index = self.proxy_model.mapFromSource(source_index)
+            self.tree.setCurrentIndex(proxy_index)
     
     def get_selected_paths(self):
         paths = []
@@ -176,6 +232,25 @@ class FileExplorer(QDockWidget):
     
     def show_context_menu(self, position):
         menu = QMenu()
+        index = self.tree.indexAt(position)
+        
+        if index.isValid():
+            source_index = self.proxy_model.mapToSource(index)
+            path = self.model.filePath(source_index)
+            
+            if self.model.isDir(source_index):
+                folder_name = os.path.basename(path)
+                
+                if folder_name in self.proxy_model.hidden_folders:
+                    show_action = QAction(f"Mostrar '{folder_name}'", self)
+                    show_action.triggered.connect(lambda: self.remove_hidden_folder(folder_name))
+                    menu.addAction(show_action)
+                else:
+                    hide_action = QAction(f"Ocultar '{folder_name}'", self)
+                    hide_action.triggered.connect(lambda: self.add_hidden_folder(folder_name))
+                    menu.addAction(hide_action)
+                
+                menu.addSeparator()
         
         open_action = QAction("Abrir", self)
         open_action.triggered.connect(self.open_selected)
@@ -261,107 +336,138 @@ class FileExplorer(QDockWidget):
                 QMessageBox.warning(self, "Aviso", "Uma pasta com esse nome já existe.")
     
     def rename_selected(self):
-        """Renomeia os arquivos ou pastas selecionadas"""
-        paths = self.get_selected_paths()
-        if not paths:
-            return
-        
-        if len(paths) == 1:
-            old_path = paths[0]
-            parent_dir = os.path.dirname(old_path)
-            current_name = os.path.basename(old_path)
+        try:
+            indexes = self.tree.selectedIndexes()
+            if not indexes:
+                return
+                
+            source_index = self.proxy_model.mapToSource(indexes[0])
+            old_path = self.model.filePath(source_index)
             
+            if not os.path.exists(old_path):
+                QMessageBox.warning(self, "Aviso", "O item selecionado não existe mais.")
+                self.refresh_tree()
+                return
+
+            current_name = os.path.basename(old_path)
             new_name, ok = QInputDialog.getText(
-                self, 
-                "Renomear", 
-                "Novo nome:",
-                text=current_name
+                self, "Renomear", "Novo nome:", text=current_name
             )
             
             if ok and new_name and new_name != current_name:
-                new_path = os.path.join(parent_dir, new_name)
+                new_path = os.path.join(os.path.dirname(old_path), new_name)
                 
-                if not os.path.exists(new_path):
-                    try:
-                        os.rename(old_path, new_path)
-                        self.refresh_tree()
-                    except Exception as e:
-                        QMessageBox.critical(self, "Erro", f"Não foi possível renomear: {str(e)}")
-                else:
+                if os.path.exists(new_path):
                     QMessageBox.warning(self, "Aviso", "Já existe um item com esse nome.")
-        else:
-            pattern, ok = QInputDialog.getText(
-                self, 
-                "Renomear Múltiplos", 
-                "Padrão de renomeação (use * para manter o nome original):",
-                text="*"
+                    return
+                    
+                self.proxy_model.setDynamicSortFilter(False)
+                
+                try:
+                    os.rename(old_path, new_path)
+                    self.model.setRootPath(self.model.rootPath())
+                except Exception as e:
+                    QMessageBox.critical(self, "Erro", f"Não foi possível renomear: {str(e)}")
+                finally:
+                    self.proxy_model.setDynamicSortFilter(True)
+                    self.refresh_tree()
+                    
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", f"Erro inesperado: {str(e)}")
+
+    def delete_selected(self):
+        try:
+            indexes = self.tree.selectedIndexes()
+            if not indexes:
+                return
+                
+            paths = []
+            for index in indexes:
+                if index.column() == 0:
+                    source_index = self.proxy_model.mapToSource(index)
+                    path = self.model.filePath(source_index)
+                    if os.path.exists(path):
+                        paths.append(path)
+            
+            if not paths:
+                return
+                
+            confirm = QMessageBox.question(
+                self, "Confirmar Exclusão", 
+                f"Tem certeza que deseja excluir {len(paths)} itens?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
             )
             
-            if ok and pattern:
+            if confirm == QMessageBox.StandardButton.Yes:
+                self.proxy_model.setDynamicSortFilter(False)
+                
                 errors = []
-                for i, old_path in enumerate(paths):
+                for path in paths:
                     try:
-                        parent_dir = os.path.dirname(old_path)
-                        current_name = os.path.basename(old_path)
-                        ext = os.path.splitext(current_name)[1] if os.path.isfile(old_path) else ""
-                        
-                        if '*' in pattern:
-                            new_name = pattern.replace('*', current_name)
+                        if os.path.isdir(path):
+                            shutil.rmtree(path)
                         else:
-                            new_name = f"{pattern}_{i+1}{ext}"
-                        
-                        new_path = os.path.join(parent_dir, new_name)
-                        
-                        counter = 1
-                        while os.path.exists(new_path):
-                            new_name = f"{pattern}_{i+1}_{counter}{ext}"
-                            new_path = os.path.join(parent_dir, new_name)
-                            counter += 1
-                        
-                        os.rename(old_path, new_path)
+                            os.remove(path)
                     except Exception as e:
-                        errors.append(f"{current_name}: {str(e)}")
+                        errors.append(f"{os.path.basename(path)}: {str(e)}")
+                
+                self.model.setRootPath(self.model.rootPath())
                 
                 if errors:
-                    QMessageBox.critical(self, "Erro", "Não foi possível renomear:\n" + "\n".join(errors))
+                    QMessageBox.critical(self, "Erro", "Não foi possível excluir:\n" + "\n".join(errors))
                 
+                self.proxy_model.setDynamicSortFilter(True)
                 self.refresh_tree()
-    
-    def delete_selected(self):
-        paths = self.get_selected_paths()
-        if not paths:
-            return
-            
-        item_names = ", ".join([os.path.basename(p) for p in paths])
-        confirm = QMessageBox.question(
-            self,
-            "Confirmar Exclusão",
-            f"Tem certeza que deseja excluir {item_names}?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        
-        if confirm == QMessageBox.StandardButton.Yes:
-            errors = []
-            for path in paths:
-                try:
-                    if os.path.isdir(path):
-                        shutil.rmtree(path)
-                    else:
-                        os.remove(path) 
-                except Exception as e:
-                    errors.append(f"{os.path.basename(path)}: {str(e)}")
-            
-            if errors:
-                QMessageBox.critical(self, "Erro", "Não foi possível excluir:\n" + "\n".join(errors))
-            else:
-                self.refresh_tree()
+                
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", f"Erro inesperado: {str(e)}")
     
     def refresh_tree(self):
-        current_index = self.tree.currentIndex()
-        root_path = self.model.rootPath()
-        
-        self.model.setRootPath("")
-        self.model.setRootPath(root_path)
-        
-        if current_index.isValid():
-            self.tree.setCurrentIndex(current_index)
+        try:
+            expanded_paths = []
+            root = self.model.rootPath()
+            
+            def collect_expanded(index):
+                if self.tree.isExpanded(index):
+                    source_index = self.proxy_model.mapToSource(index)
+                    path = self.model.filePath(source_index)
+                    expanded_paths.append(path)
+
+                    for i in range(self.proxy_model.rowCount(index)):
+                        child_index = self.proxy_model.index(i, 0, index)
+                        collect_expanded(child_index)
+            
+            root_index = self.proxy_model.mapFromSource(self.model.index(root))
+            if root_index.isValid():
+                collect_expanded(root_index)
+            
+            current_index = self.tree.currentIndex()
+            current_path = None
+            if current_index.isValid():
+                source_index = self.proxy_model.mapToSource(current_index)
+                current_path = self.model.filePath(source_index)
+            
+            self.model.setRootPath("")
+            self.model.setRootPath(root)
+            
+            def restore_expansion(index):
+                source_index = self.proxy_model.mapToSource(index)
+                path = self.model.filePath(source_index)
+                if path in expanded_paths:
+                    self.tree.setExpanded(index, True)
+                for i in range(self.proxy_model.rowCount(index)):
+                    child_index = self.proxy_model.index(i, 0, index)
+                    restore_expansion(child_index)
+            
+            if root_index.isValid():
+                restore_expansion(root_index)
+            
+            if current_path:
+                source_index = self.model.index(current_path)
+                if source_index.isValid():
+                    proxy_index = self.proxy_model.mapFromSource(source_index)
+                    self.tree.setCurrentIndex(proxy_index)
+                    self.tree.scrollTo(proxy_index)
+                    
+        except Exception as e:
+            print(f"Erro ao atualizar árvore: {str(e)}")

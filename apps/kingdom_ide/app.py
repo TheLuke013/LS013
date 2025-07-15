@@ -2,35 +2,27 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QDockWidget,
                               QWidget, QVBoxLayout, QFileDialog)
 from PySide6.QtCore import Qt, QSettings
 from PySide6.QtGui import QAction, QKeySequence, QShortcut
+from pathlib import Path
 
-from apps.kingdom_ide.editor.editor import PythonEditor
+from api.application import Application
+from apps.kingdom_ide.editor.python_editor import PythonEditor
 from apps.kingdom_ide.file_explorer import FileExplorer
+from apps.kingdom_ide.terminal import Terminal
 
-class KingdomIDE(QMainWindow):
+class KingdomIDE(Application):
     def __init__(self, work_root_path=None, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Kingdom IDE")
-        self.resize(1200, 800)
+        super().__init__("Kingdom IDE", 1200, 800, parent)
         
-        self.setWindowFlags(
-            self.windowFlags() | 
-            Qt.Window |
-            Qt.WindowCloseButtonHint |
-            Qt.WindowMinimizeButtonHint |
-            Qt.WindowMaximizeButtonHint
-        )
-        
-        self.work_root_path = work_root_path
-        
+        self.work_root_path = Path(work_root_path) if work_root_path else None
         self.editor = None
         self.editor_dock = None
         self.file_explorer = None
         self.current_file = None
-        self.desktop_parent = parent
         
         self.setup_dark_theme()
         self.setup_docks()
         self.create_menu_bar()
+        self.setup_terminal()
         
         settings = QSettings("KingdomIDE", "Layout")
         if settings.value("geometry"):
@@ -74,6 +66,16 @@ class KingdomIDE(QMainWindow):
             self.shortcut_delete = QShortcut(QKeySequence("Delete"), self)
             self.shortcut_delete.activated.connect(self.file_explorer.delete_selected)
     
+    def setup_terminal(self):
+        self.terminal = Terminal()
+        terminal_dock = QDockWidget("Terminal", self)
+        terminal_dock.setWidget(self.terminal)
+        self.addDockWidget(Qt.BottomDockWidgetArea, terminal_dock)
+        
+        settings = QSettings("KingdomIDE", "Terminal")
+        if settings.value("geometry"):
+            terminal_dock.restoreGeometry(settings.value("geometry"))
+            
     def save_current_file(self):
         if hasattr(self, 'editor') and self.editor:
             if hasattr(self.editor, 'save_file'):
@@ -128,6 +130,11 @@ class KingdomIDE(QMainWindow):
         open_action.triggered.connect(self.open_file_dialog)
         file_menu.addAction(open_action)
         
+        tools_menu = menu_bar.addMenu("Ferramentas")
+        run_action = QAction("Executar", self)
+        run_action.triggered.connect(self.run_code)
+        tools_menu.addAction(run_action)
+        
         if self.editor:
             edit_menu = menu_bar.addMenu("Editar")
             
@@ -156,6 +163,10 @@ class KingdomIDE(QMainWindow):
             save_action = QAction("Salvar", self)
             save_action.triggered.connect(self.save_current_file)
             file_menu.addAction(save_action)
+
+    def run_code(self):
+            if self.editor and self.editor.current_file:
+                self.statusBar().showMessage(f"Executando: {self.editor.current_file}")            
     
     def new_file(self):
         self.editor.clear()
