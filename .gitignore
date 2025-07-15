@@ -2,7 +2,6 @@ venv/
 users/
 system/logs/
 __pycache__
-apps/
 
 *.lnk
 *.pyc
