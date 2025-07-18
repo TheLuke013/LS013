@@ -18,6 +18,7 @@ class KingdomIDE(Application):
         self.editor_dock = None
         self.file_explorer = None
         self.current_file = None
+        self.terminal = None
         
         self.setup_dark_theme()
         self.setup_docks()
@@ -122,6 +123,10 @@ class KingdomIDE(Application):
         
         file_menu = menu_bar.addMenu("Arquivo")
         
+        change_dir_action = QAction("Mudar Diretório de Trabalho", self)
+        change_dir_action.triggered.connect(self.change_work_directory)
+        file_menu.addAction(change_dir_action)
+        
         new_action = QAction("Novo", self)
         new_action.triggered.connect(self.new_file)
         file_menu.addAction(new_action)
@@ -164,9 +169,36 @@ class KingdomIDE(Application):
             save_action.triggered.connect(self.save_current_file)
             file_menu.addAction(save_action)
 
+    def change_work_directory(self):
+        new_dir = QFileDialog.getExistingDirectory(
+            self,
+            "Selecionar Novo Diretório de Trabalho",
+            str(self.work_root_path) if self.work_root_path else ""
+        )
+        
+        if new_dir:
+            self.work_root_path = Path(new_dir)
+            if self.file_explorer:
+                self.file_explorer.set_root_path(new_dir)
+            self.statusBar().showMessage(f"Diretório alterado para: {new_dir}")
+
     def run_code(self):
-            if self.editor and self.editor.current_file:
-                self.statusBar().showMessage(f"Executando: {self.editor.current_file}")            
+        if self.editor and self.editor.current_file:
+            file_path = Path(self.editor.current_file)
+            
+            if file_path.suffix == '.py':
+                self.save_current_file()
+                cmd = f'python "{file_path}"'
+                
+                if self.terminal:
+                    self.terminal.execute_command(cmd)
+                    self.statusBar().showMessage(f"Executando: {file_path.name}")
+                else:
+                    self.statusBar().showMessage("Terminal não disponível para execução")
+            else:
+                self.statusBar().showMessage("Arquivo não é um script Python (.py)")
+        else:
+            self.statusBar().showMessage("Nenhum arquivo aberto para executar")          
     
     def new_file(self):
         self.editor.clear()

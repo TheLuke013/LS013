@@ -109,7 +109,16 @@ class FileExplorer(QDockWidget):
             self._root_path = path
             self.tree.setRootIndex(self.model.index(path))
             self.refresh_tree()
-            
+    
+    def set_root_path(self, new_path):
+        """Define um novo diretório raiz para o explorador de arquivos"""
+        if os.path.exists(new_path):
+            self._root_path = new_path
+            self.model.setRootPath(new_path)
+            root_index = self.proxy_model.mapFromSource(self.model.index(new_path))
+            self.tree.setRootIndex(root_index)
+            self.refresh_tree()
+        
     def setup_connections(self):
         self.tree.doubleClicked.connect(self.on_file_double_clicked)
         self.tree.customContextMenuRequested.connect(self.show_context_menu)

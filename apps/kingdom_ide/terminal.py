@@ -144,16 +144,26 @@ class Terminal(QPlainTextEdit):
             super().keyPressEvent(event)
             self.pending_command += event.text()
 
-    def execute_command(self):
-        if not self.pending_command:
-            return
-            
-        self.history.append(self.pending_command)
-        self.history_index = len(self.history)
-        
-        self.process.write((self.pending_command + "\n").encode())
-        self.pending_command = ""
-        self.moveCursor(QTextCursor.End)
+    def execute_command(self, command=None):
+        """Executa um comando no terminal. Se nenhum comando for fornecido, usa o pending_command"""
+        if command is not None:
+            # Comando externo (chamado pela IDE)
+            self.process.write((command + "\r\n").encode())
+            self.moveCursor(QTextCursor.End)
+        elif self.pending_command:
+            # Comando digitado pelo usuário
+            cmd = self.pending_command.strip()
+            self.history.append(cmd)
+            self.history_index = len(self.history)
+
+            if cmd == "cls" or cmd == "clear":
+                self.clear()
+                self.pending_command = ""
+                return
+
+            self.process.write((cmd + "\n").encode())
+            self.pending_command = ""
+            self.moveCursor(QTextCursor.End)
 
     def navigate_history(self, direction):
         if not self.history:
